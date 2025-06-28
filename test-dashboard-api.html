@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>仪表板API测试</title>
+    <style>
+        body {
+            font-family: 'Microsoft YaHei', sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f5f7fa;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .card {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        .btn {
+            background: #409EFF;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        .btn:hover {
+            background: #337ab7;
+        }
+        .result {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 15px;
+            margin-top: 10px;
+            font-family: monospace;
+            font-size: 12px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+        }
+        .error {
+            background: #f8d7da;
+            border-color: #f5c6cb;
+            color: #721c24;
+        }
+        .success {
+            background: #d4edda;
+            border-color: #c3e6cb;
+            color: #155724;
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        h2 {
+            color: #34495e;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>养殖金融互助系统 - 仪表板API测试</h1>
+        
+        <div class="card">
+            <h2>基础接口测试</h2>
+            <button class="btn" onclick="testHomeIndex()">首页数据</button>
+            <button class="btn" onclick="testOperatingData()">经营数据</button>
+            <button class="btn" onclick="testChannelData()">用户渠道数据</button>
+            <div id="basicResult" class="result"></div>
+        </div>
+
+        <div class="card">
+            <h2>新增接口测试</h2>
+            <button class="btn" onclick="testHotProducts()">热门商品排行</button>
+            <button class="btn" onclick="testRealtimeData()">实时数据流</button>
+            <button class="btn" onclick="testFinanceOverview()">财务概览</button>
+            <button class="btn" onclick="testSalesTrend()">销售趋势</button>
+            <div id="newResult" class="result"></div>
+        </div>
+
+        <div class="card">
+            <h2>参数化测试</h2>
+            <div>
+                <label>热门商品时间范围：</label>
+                <select id="timeRange">
+                    <option value="7d">最近7天</option>
+                    <option value="30d">最近30天</option>
+                    <option value="90d">最近90天</option>
+                </select>
+                <select id="rankType">
+                    <option value="sales">按销量</option>
+                    <option value="amount">按销售额</option>
+                    <option value="views">按浏览量</option>
+                </select>
+                <input type="number" id="limit" value="10" min="1" max="50" placeholder="数量限制">
+                <button class="btn" onclick="testHotProductsWithParams()">测试热门商品</button>
+            </div>
+            <div style="margin-top: 15px;">
+                <label>销售趋势时间范围：</label>
+                <select id="trendTimeRange">
+                    <option value="7d">最近7天</option>
+                    <option value="30d">最近30天</option>
+                    <option value="90d">最近90天</option>
+                </select>
+                <button class="btn" onclick="testSalesTrendWithParams()">测试销售趋势</button>
+            </div>
+            <div id="paramResult" class="result"></div>
+        </div>
+
+        <div class="card">
+            <h2>批量测试</h2>
+            <button class="btn" onclick="testAllAPIs()">测试所有API</button>
+            <div id="batchResult" class="result"></div>
+        </div>
+    </div>
+
+    <script>
+        const BASE_URL = 'http://localhost:8080/api/admin/platform/statistics/home';
+        
+        async function makeRequest(url, params = {}) {
+            try {
+                const queryString = new URLSearchParams(params).toString();
+                const fullUrl = queryString ? `${url}?${queryString}` : url;
+                
+                const response = await fetch(fullUrl, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        // 如果需要认证，请添加相应的headers
+                        // 'Authorization': 'Bearer your-token'
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                return data;
+            } catch (error) {
+                throw error;
+            }
+        }
+
+        function displayResult(containerId, result, isError = false) {
+            const container = document.getElementById(containerId);
+            container.className = `result ${isError ? 'error' : 'success'}`;
+            container.textContent = JSON.stringify(result, null, 2);
+        }
+
+        async function testHomeIndex() {
+            try {
+                const result = await makeRequest(`${BASE_URL}/index`);
+                displayResult('basicResult', result);
+            } catch (error) {
+                displayResult('basicResult', { error: error.message }, true);
+            }
+        }
+
+        async function testOperatingData() {
+            try {
+                const result = await makeRequest(`${BASE_URL}/operating/data`);
+                displayResult('basicResult', result);
+            } catch (error) {
+                displayResult('basicResult', { error: error.message }, true);
+            }
+        }
+
+        async function testChannelData() {
+            try {
+                const result = await makeRequest(`${BASE_URL}/channel`);
+                displayResult('basicResult', result);
+            } catch (error) {
+                displayResult('basicResult', { error: error.message }, true);
+            }
+        }
+
+        async function testHotProducts() {
+            try {
+                const result = await makeRequest(`${BASE_URL}/hot-products`);
+                displayResult('newResult', result);
+            } catch (error) {
+                displayResult('newResult', { error: error.message }, true);
+            }
+        }
+
+        async function testRealtimeData() {
+            try {
+                const result = await makeRequest(`${BASE_URL}/realtime`);
+                displayResult('newResult', result);
+            } catch (error) {
+                displayResult('newResult', { error: error.message }, true);
+            }
+        }
+
+        async function testFinanceOverview() {
+            try {
+                const result = await makeRequest(`${BASE_URL}/finance`);
+                displayResult('newResult', result);
+            } catch (error) {
+                displayResult('newResult', { error: error.message }, true);
+            }
+        }
+
+        async function testSalesTrend() {
+            try {
+                const result = await makeRequest(`${BASE_URL}/trends`);
+                displayResult('newResult', result);
+            } catch (error) {
+                displayResult('newResult', { error: error.message }, true);
+            }
+        }
+
+        async function testHotProductsWithParams() {
+            try {
+                const params = {
+                    timeRange: document.getElementById('timeRange').value,
+                    rankType: document.getElementById('rankType').value,
+                    limit: document.getElementById('limit').value
+                };
+                const result = await makeRequest(`${BASE_URL}/hot-products`, params);
+                displayResult('paramResult', result);
+            } catch (error) {
+                displayResult('paramResult', { error: error.message }, true);
+            }
+        }
+
+        async function testSalesTrendWithParams() {
+            try {
+                const params = {
+                    timeRange: document.getElementById('trendTimeRange').value
+                };
+                const result = await makeRequest(`${BASE_URL}/trends`, params);
+                displayResult('paramResult', result);
+            } catch (error) {
+                displayResult('paramResult', { error: error.message }, true);
+            }
+        }
+
+        async function testAllAPIs() {
+            const container = document.getElementById('batchResult');
+            container.className = 'result';
+            container.textContent = '正在测试所有API...\n\n';
+            
+            const apis = [
+                { name: '首页数据', url: `${BASE_URL}/index` },
+                { name: '经营数据', url: `${BASE_URL}/operating/data` },
+                { name: '用户渠道数据', url: `${BASE_URL}/channel` },
+                { name: '热门商品排行', url: `${BASE_URL}/hot-products` },
+                { name: '实时数据流', url: `${BASE_URL}/realtime` },
+                { name: '财务概览', url: `${BASE_URL}/finance` },
+                { name: '销售趋势', url: `${BASE_URL}/trends` }
+            ];
+            
+            let results = [];
+            
+            for (const api of apis) {
+                try {
+                    const result = await makeRequest(api.url);
+                    results.push({
+                        name: api.name,
+                        status: 'SUCCESS',
+                        data: result
+                    });
+                    container.textContent += `✅ ${api.name}: 成功\n`;
+                } catch (error) {
+                    results.push({
+                        name: api.name,
+                        status: 'ERROR',
+                        error: error.message
+                    });
+                    container.textContent += `❌ ${api.name}: ${error.message}\n`;
+                }
+            }
+            
+            container.textContent += '\n=== 详细结果 ===\n';
+            container.textContent += JSON.stringify(results, null, 2);
+        }
+
+        // 页面加载完成后自动测试基础API
+        window.onload = function() {
+            console.log('页面加载完成，可以开始测试API');
+        };
+    </script>
+</body>
+</html> 
